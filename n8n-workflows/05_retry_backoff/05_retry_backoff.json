@@ -1,0 +1,511 @@
+{
+  "name": "Ejercicio Unidad 2 Retry Backoff v4 _OK",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        512
+      ],
+      "id": "65dbfc3f-edfd-4ba9-b748-eeceb6271921",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "intentos",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "a2",
+              "name": "espera",
+              "value": 2000,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "31d9be43-87ac-4e48-ba1a-1c979d7cfdfa",
+      "name": "Variables Iniciales",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -448,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log1",
+              "name": "log_intento",
+              "value": "={{ $json.intentos + 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "log2",
+              "name": "log_url",
+              "value": "https://timeapi.io/api/Time/current/zone?timeZone=ZonaInvalida",
+              "type": "string"
+            },
+            {
+              "id": "log3",
+              "name": "intentos",
+              "value": "={{ $json.intentos }}",
+              "type": "number"
+            },
+            {
+              "id": "log4",
+              "name": "espera",
+              "value": "={{ $json.espera }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eb9fd01f-cdb4-4b37-a873-f135ee4ec611",
+      "name": "Log Inicio Intento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://timeapi.io/api/Time/current/zone?timeZone=America/Argentina/Buenos_Aires",
+        "options": {}
+      },
+      "id": "f0d7dd34-71d8-41fb-8d3e-a70307a18c64",
+      "name": "Llamada API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        512
+      ],
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.dateTime }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "52d025eb-75db-43eb-8f14-a4de233a9bf6",
+      "name": "¿Tiene dateTime?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        384,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ok1",
+              "name": "Estado",
+              "value": "Éxito",
+              "type": "string"
+            },
+            {
+              "id": "ok2",
+              "name": "log_url",
+              "value": "={{ $('Log Inicio Intento').item.json.log_url }}",
+              "type": "string"
+            },
+            {
+              "id": "ok3",
+              "name": "log_httpCode",
+              "value": 200,
+              "type": "number"
+            },
+            {
+              "id": "ok4",
+              "name": "log_datetime",
+              "value": "={{ $json.dateTime }}",
+              "type": "string"
+            },
+            {
+              "id": "ok5",
+              "name": "log_timeZone",
+              "value": "={{ $json.timeZone }}",
+              "type": "string"
+            },
+            {
+              "id": "ok6",
+              "name": "log_intento",
+              "value": "={{ $('Log Inicio Intento').item.json.log_intento }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7bc5f759-652e-4f50-ad34-3f3861e1b543",
+      "name": "Log Éxito",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prep1",
+              "name": "intentos",
+              "value": "={{ $('Log Inicio Intento').item.json.intentos }}",
+              "type": "number"
+            },
+            {
+              "id": "prep2",
+              "name": "espera",
+              "value": "={{ $('Log Inicio Intento').item.json.espera }}",
+              "type": "number"
+            },
+            {
+              "id": "prep3",
+              "name": "error_msg",
+              "value": "={{ $json.message ?? $json.error ?? 'Sin dateTime en respuesta' }}",
+              "type": "string"
+            },
+            {
+              "id": "prep4",
+              "name": "error_httpCode",
+              "value": "={{ $json.httpCode ?? 200 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fc9c5865-4877-4e9b-a42a-b774397d2535",
+      "name": "Preparar Reintento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.intentos }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "266d77e8-6230-4c97-bef0-714db4b0ea82",
+      "name": "¿Reintentar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        448,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3",
+              "name": "intentos",
+              "value": "={{ $json.intentos + 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "a4",
+              "name": "espera",
+              "value": "={{ $json.espera * 2 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bb20f9bf-562e-40ea-a168-10835925c1bd",
+      "name": "Cálculo Backoff",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.espera / 1000 }}"
+      },
+      "id": "9844c467-e5bb-442a-b082-c366d1e8644e",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        592
+      ],
+      "webhookId": "c20c1243-d477-4e29-9d50-1dd8ccf08a24"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "err1",
+              "name": "Estado",
+              "value": "Fallo Definitivo tras 3 intentos",
+              "type": "string"
+            },
+            {
+              "id": "err2",
+              "name": "Detalle_Error",
+              "value": "={{ $json.error_msg }}",
+              "type": "string"
+            },
+            {
+              "id": "err3",
+              "name": "log_url",
+              "value": "={{ $('Log Inicio Intento').item.json.log_url }}",
+              "type": "string"
+            },
+            {
+              "id": "err4",
+              "name": "log_httpCode",
+              "value": "={{ $json.error_httpCode }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        800
+      ],
+      "id": "cb3ea814-c058-4602-98b8-0379ed17d2de",
+      "name": "Log Fallo Final"
+    },
+    {
+      "parameters": {
+        "content": "## Función General\nEste workflow obtiene la hora actual para una zona horaria específica utilizando la API timeapi.io.\n\n**API utilizada:**\nhttps://timeapi.io/api/Time/current/zone?timeZone=America/Argentina/Buenos_Aires\n\n⚠️ **Testing:** URL seteada a `ZonaInvalida` para forzar errores. Cambiar a una zona válida para producción.\n\n## Idempotencia\nSolo operaciones GET — inherentemente idempotente.\n\n## Logging\nSe registra URL, intento, código HTTP y resultado en cada ciclo.",
+        "height": 520,
+        "width": 340
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1072,
+        432
+      ],
+      "typeVersion": 1,
+      "id": "b76f6a04-f5bb-4148-8327-fb7936099935",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Manejo de reintentos\nHasta **3 intentos** con **backoff exponencial** (2s → 4s → 8s).\n\n## Flujo v4\n```\nLlamada API\n  ├── Success → ¿Tiene dateTime?\n  │               ├── true  → Log Éxito ✅\n  │               └── false → Preparar Reintento\n  └── Error   → Preparar Reintento\n                    └── ¿Reintentar?\n                          ├── true  → Cálculo Backoff\n                          │            → Wait → Log Inicio Intento\n                          └── false → Log Fallo Final ✅\n```\n\n## Fix clave v4\n- ✅ Nodo `¿Tiene dateTime?` detecta cuando la API responde HTTP 200 pero con body inválido (ej: ZonaInvalida devuelve 200 sin dateTime)\n- ✅ Ambos caminos de error (red Y body inválido) convergen en `Preparar Reintento`\n- ✅ `error_msg` usa `??` para capturar cualquier forma de error\n- ✅ Wait usa `espera / 1000` en segundos (evita error de unidad)",
+        "height": 700,
+        "width": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -112,
+        -48
+      ],
+      "typeVersion": 1,
+      "id": "e6075e4a-fa51-47c4-8884-98a775fd8706",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Variables Iniciales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Variables Iniciales": {
+      "main": [
+        [
+          {
+            "node": "Log Inicio Intento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Inicio Intento": {
+      "main": [
+        [
+          {
+            "node": "Llamada API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamada API": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene dateTime?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Reintento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene dateTime?": {
+      "main": [
+        [
+          {
+            "node": "Log Éxito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Reintento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Reintento": {
+      "main": [
+        [
+          {
+            "node": "¿Reintentar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Reintentar?": {
+      "main": [
+        [
+          {
+            "node": "Cálculo Backoff",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Fallo Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cálculo Backoff": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Log Inicio Intento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "28875f63-e0f8-4699-86b4-73c37ead3ba2",
+  "meta": {
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}
