@@ -1,0 +1,7 @@
+# 01 · Fecha y Hora
+
+**Descripción:** Obtiene la fecha y hora actual y la formatea como texto.  
+**Estado:** ✅ Exitoso  
+**Nivel:** Principiante  
+**Nodos usados:** `DateTime`, `Set`  
+**Aprendizaje clave:** Cómo manipular variables de tiempo en n8n.
