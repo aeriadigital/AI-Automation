@@ -1,0 +1,467 @@
+{
+  "name": "retry",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $('Formulario').item.json['Correo electrónico'] }}",
+        "subject": "={{ $json.asunto }}",
+        "emailType": "text",
+        "message": "={{ $json.cuerpo }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1360,
+        1248
+      ],
+      "id": "1dd61b89-693d-44a2-872f-332646d336c8",
+      "name": "Enviar_correo",
+      "webhookId": "01cd6cfa-6421-4107-bf14-af1a3e199b67",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Contacto empresa",
+        "formDescription": "Bienvenido, introduce tus datos y te ayudaremos con la fecha y la hora de la reunión.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nombre",
+              "placeholder": "¿Cómo te llamas?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Apellido",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Correo electrónico",
+              "fieldType": "email",
+              "placeholder": "ejemplo@dominio.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Cuál es tu presupuesto?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Entre 100.000 ARS y 900.000 ARS"
+                  },
+                  {
+                    "option": "más de 1.000.000 ARS"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Qué tipo de automatización requieres?",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -96,
+        1248
+      ],
+      "id": "bbc13bd2-e3c3-4968-8f96-7e575ad79e31",
+      "name": "Formulario",
+      "webhookId": "9b6da873-8a26-4a85-9c4d-07400b27f2f9"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Debes crear un correo electrónico con intención de agendar una reunión con un cliente cuyos datos hemos recogido de un formulario. Proporcioname la salida con concepto o asunto separado del cuerpo.\n\nLos datos de entrada son los siguientes:\n\nNombre: {{ $json.Nombre }}\nApellido: {{ $json.Apellido }}\nNecesidad: {{ $json['¿Qué tipo de automatización requieres?'] }}\n\nEjemplo de correo electrónico utilizado como referencia no lo uses como guía absoluta.\n\n----------------------------------------\n\nEjemplo de correo electrónico:\n\nMe complace enormemente que deposites tu confianza en nuestra empresa. \"Texto personalizado persuasivo con intensión de agendar relacionado con la 'necesidad'\"\n\nPuedes agendar una cita conmigo en el siguiente enlace: \nhttps://cal.com/aprendizaje-n8n-km57nh\n\nSaludos,",
+              "role": "=user"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        432,
+        1248
+      ],
+      "id": "05968253-01fd-4514-9d66-067dc0a4e11d",
+      "name": "Agente_customizador",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// El nodo Code debe iterar siempre sobre los 'items' que recibe\n\n    \n    // **1. Inyección de datos y Respaldo (Fallback)**\n    // Si la data llega correctamente (ej: cliente.Nombre), se usa.\n    // Si la data es undefined o nula, se usa el texto de respaldo ('').\n    const nombre = $('Formulario').first().json.Nombre || '';\n    const necesidad = $('Formulario').first().json[\"¿Qué tipo de automatización requieres?\"] || 'Automatización';\n    \n    // 2. Construcción del Cuerpo del Correo\n    // Se usan saltos de línea reales dentro de las comillas (template literals) \n    \nconst textoPersonalizado = `Me complace enormemente que deposites tu confianza en nuestra empresa. Entendemos tu interés en crear un bot automatizado que te ayude a optimizar tus tareas. \n\nEspecíficamente, queremos discutir cómo podemos implementar una solución para ${necesidad}, lo cual liberará tiempo y recursos valiosos para tu negocio.`;\n\nconst cuerpoCorreo = `Hola, ${nombre}\n    \n${textoPersonalizado}\n\nUna breve conversación nos permitirá entender a fondo tus requerimientos y mostrarte el plan de acción perfecto.\n\nPuedes agendar una cita conmigo en el siguiente enlace:\nhttps://cal.com/aprendizaje-n8n-km57nh\n\nSaludos,\n\nConsultor de Automatización`;\n\n    // 3. Construcción del Asunto\n    const asuntoCorreo = `Tu consulta sobre ${necesidad} - ¡Agendemos, ${nombre}!`;\n\n    // 4. Devolver la salida en el formato requerido por n8n: array de objetos\n    // **CORRECCIÓN AQUÍ:** Devolvemos un objeto con las variables directamente.\n    return {\n        // Devolvemos el asunto y el cuerpo directamente. Si necesitas \n        // mantener la estructura 'json', asegúrate de que el siguiente \n        // nodo (ej: Send Email) referencie correctamente '{{$json.cuerpo}}'\n        asunto: asuntoCorreo,\n        cuerpo: cuerpoCorreo\n    };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        1248
+      ],
+      "id": "9b766d02-b7d4-43b3-9612-00b0a64563ed",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "content": "## Disparador\nDiseñado para la recopilación inicial de datos de clientes. Su propósito es guiar al usuario a introducir su información personal para poder ayudar en la programación de una reunión (fecha y hora). ",
+        "height": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        1056
+      ],
+      "typeVersion": 1,
+      "id": "a8bdf7d3-8f3e-45e7-88f7-75db107d7ff1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Automatización con  IA\nEste proceso automatizado combina la recolección de datos y la inteligencia artificial para el seguimiento de clientes.\n\nEl prompt que utilizaremos: \n\nDebes crear un correo electrónico con intención de agendar una reunión con un cliente cuyos datos hemos recogido de un formulario. Proporcioname la salida con concepto o asunto separado del cuerpo.\n\nLos datos de entrada son los siguientes:\n\nNombre: {{ $json.Nombre }}\nApellido: {{ $json.Apellido }}\nNecesidad: {{ $json['¿Qué tipo de automatización requieres?'] }}\n\nEjemplo de correo electrónico utilizado como referencia no lo uses como guía absoluta.\n\n----------------------------------------\n\nEjemplo de correo electrónico. El saludo dejalo con el nombre siempre y el puesto exactamente el mismo.\n\nHola \"Nombre\",\n\nMe complace enormemente que deposites tu confianza en nuestra empresa. \"Texto personalizado persuasivo con intensión de agendar relacionado con la 'necesidad'\"\n\nPuedes agendar una cita conmigo en el siguiente enlace: \nhttps://cal.com/aprendizaje-n8n-km57nh\n\nSaludos,",
+        "height": 1376,
+        "width": 448,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        64
+      ],
+      "typeVersion": 1,
+      "id": "4f9d440b-e8f5-4d9d-8e58-db14c55144d9",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Automatización: Código para Personalizar Asunto y Cuerpo\nEste proceso automatizado es un flujo completo de seguimiento para agendar citas, utilizando la inteligencia artificial para personalizar la comunicación.",
+        "height": 416,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        800,
+        960
+      ],
+      "typeVersion": 1,
+      "id": "76c6f845-32ca-4225-9e21-d50ac521956a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "amount": 0.5,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        1504
+      ],
+      "id": "d0d8f805-66b6-4f3d-8eaa-4019d294a165",
+      "name": "Espera de 30 segundos",
+      "webhookId": "7d5b0400-f5b9-4028-a4f5-971afe5c9edc"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        336,
+        1504
+      ],
+      "id": "251508e5-a74f-4916-9d03-e1d9f5bfa7aa",
+      "name": "Get row(s) in sheet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "50044dd8-be74-4e61-b878-a8c18e3cccb5",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        544,
+        1504
+      ],
+      "id": "df152409-808c-490b-a2f3-37ce1e67c0d1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1488,
+        1536
+      ],
+      "id": "5e0bce3e-bf0d-45b9-b0f1-bbd13665ecdd",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# Loop over input items and add a new field called 'my_new_field' to the JSON of each one\nfor item in _items:\n  item[\"json\"][\"my_new_field\"] = 1\nreturn _items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        1520
+      ],
+      "id": "5cd477c0-21cb-47cc-9b96-f78b2989f33d",
+      "name": "Code in Python"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f15ead63-1325-45ad-8605-b599f4989b19",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        976,
+        1520
+      ],
+      "id": "9d212ddd-cdd3-41ef-a053-eaae4dcbabf7",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1264,
+        1536
+      ],
+      "id": "d39c13c8-1a76-499e-b04b-d29843576fb5",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Formulario": {
+      "main": [
+        [
+          {
+            "node": "Espera de 30 segundos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente_customizador": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Enviar_correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Espera de 30 segundos": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Agente_customizador",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in Python",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Espera de 30 segundos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c1bb33a4-3fc3-4aa9-81c4-a1a2349a9bfc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": [
+    {
+      "updatedAt": "2026-02-18T21:16:44.246Z",
+      "createdAt": "2026-02-18T21:16:44.246Z",
+      "id": "YOUR_TAG_ID",
+      "name": "curso ai automation"
+    }
+  ]
+}
