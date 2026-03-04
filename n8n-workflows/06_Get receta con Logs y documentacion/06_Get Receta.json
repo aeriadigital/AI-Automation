@@ -1,0 +1,253 @@
+{
+  "name": "Ejercicio U3 - Mejorado con Logs y Documentación",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        112
+      ],
+      "id": "91586f7b-fd5d-484d-a5a2-85973a62bd64",
+      "name": "When clicking 'Execute workflow'"
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/recipes/1",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -816,
+        112
+      ],
+      "id": "3fd93ce7-0708-4be9-a4ba-1e94f2db03d2",
+      "name": "GET Receta",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput",
+      "notes": "Obtiene una receta específica desde DummyJSON. Configurado con retry automático (3 intentos, 2s entre cada uno). Operación GET, inherentemente idempotente."
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first();\nconst isError = response.json.error !== undefined;\n\nconst log = {\n  timestamp: new Date().toISOString(),\n  url: 'https://dummyjson.com/recipes/1',\n  status: isError ? 'ERROR' : 'SUCCESS',\n  statusCode: response.json.statusCode || 200,\n  message: isError\n    ? `Error: ${response.json.message || 'Error desconocido'}`\n    : `Receta obtenida: ${response.json.name || 'sin nombre'} | Rating: ${response.json.rating}`,\n  rating: response.json.rating || null,\n  recipeId: response.json.id || null\n};\n\nconsole.log(JSON.stringify(log));\n\nreturn [{ json: { ...response.json, _log: log } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        112
+      ],
+      "id": "fc57748b-c678-4082-a72e-7f9ec034ae83",
+      "name": "LOG - Resultado GET Receta",
+      "notesInFlow": true,
+      "notes": "Registra: URL accedida, código de estado, mensaje de error o dato exitoso (nombre y rating de la receta). El log se adjunta al JSON como _log para trazabilidad en nodos siguientes."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eea34983-607f-4bd6-9a45-368194dc3929",
+              "leftValue": "={{ $json.rating }}",
+              "rightValue": 4.5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -384,
+        112
+      ],
+      "id": "69b3b66c-3aed-4b4f-8958-cc8f26692690",
+      "name": "IF rating >= 4.5",
+      "notesInFlow": true,
+      "notes": "Condición: si rating >= 4.5 → rama TRUE busca comentarios de esa receta. Si no → rama FALSE busca recetas alternativas de tipo dessert."
+    },
+    {
+      "parameters": {
+        "url": "=https://dummyjson.com/comments/post/{{ $('LOG - Resultado GET Receta').item.json.id }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -160,
+        -32
+      ],
+      "id": "b81a76c5-5aaf-42f3-8f00-e4271141e0bf",
+      "name": "GET Comentarios (True)",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput",
+      "notes": "Busca comentarios de la receta usando su ID dinámico. Retry habilitado. GET idempotente."
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/recipes?tag=dessert",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -160,
+        256
+      ],
+      "id": "a60476ca-3dfc-4ee9-beda-680f77768f27",
+      "name": "GET Alternativas (False)",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput",
+      "notes": "Rama FALSE: busca recetas alternativas con tag dessert. Retry habilitado. GET idempotente."
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first();\nconst isError = response.json.error !== undefined;\n\nconst log = {\n  timestamp: new Date().toISOString(),\n  url: `https://dummyjson.com/comments/post/${response.json.postId || 'desconocido'}`,\n  status: isError ? 'ERROR' : 'SUCCESS',\n  statusCode: response.json.statusCode || 200,\n  message: isError\n    ? `Error: ${response.json.message || 'Error desconocido'}`\n    : `Comentarios obtenidos: ${response.json.total || 0} comentarios para la receta`,\n  totalComments: response.json.total || null\n};\n\nconsole.log(JSON.stringify(log));\n\nreturn [{ json: { ...response.json, _log: log } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -48
+      ],
+      "id": "9af2776e-9343-4cde-b343-3cfba1c8bd21",
+      "name": "LOG - Comentarios",
+      "notesInFlow": true,
+      "notes": "Registra resultado del GET de comentarios: URL, estado, total de comentarios obtenidos o mensaje de error."
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first();\nconst isError = response.json.error !== undefined;\n\nconst log = {\n  timestamp: new Date().toISOString(),\n  url: 'https://dummyjson.com/recipes?tag=dessert',\n  status: isError ? 'ERROR' : 'SUCCESS',\n  statusCode: response.json.statusCode || 200,\n  message: isError\n    ? `Error: ${response.json.message || 'Error desconocido'}`\n    : `Recetas alternativas obtenidas: ${response.json.total || 0} resultados`,\n  totalRecipes: response.json.total || null\n};\n\nconsole.log(JSON.stringify(log));\n\nreturn [{ json: { ...response.json, _log: log } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        240
+      ],
+      "id": "8897c606-0b9e-4c2a-b520-423603b3892e",
+      "name": "LOG - Alternativas",
+      "notesInFlow": true,
+      "notes": "Registra resultado del GET de recetas alternativas: URL, estado, total de recetas o mensaje de error."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "GET Receta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Receta": {
+      "main": [
+        [
+          {
+            "node": "LOG - Resultado GET Receta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LOG - Resultado GET Receta": {
+      "main": [
+        [
+          {
+            "node": "IF rating >= 4.5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF rating >= 4.5": {
+      "main": [
+        [
+          {
+            "node": "GET Comentarios (True)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET Alternativas (False)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Comentarios (True)": {
+      "main": [
+        [
+          {
+            "node": "LOG - Comentarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Alternativas (False)": {
+      "main": [
+        [
+          {
+            "node": "LOG - Alternativas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d6918a25-86a4-4a41-acb0-243999c98f91",
+  "meta": {
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}
