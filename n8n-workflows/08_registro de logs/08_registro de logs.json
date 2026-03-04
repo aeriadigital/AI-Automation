@@ -1,0 +1,343 @@
+{
+  "name": "8_ Ejercicio de Registro de logs_v1",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        96
+      ],
+      "id": "b4736f8d-da17-44ba-be4c-a5c704cba70d",
+      "name": "🚀 Trigger Manual"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Registro de Logs",
+          "cachedResultUrl": "YOUR_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "YOUR_SPREADSHEET_URL"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        368,
+        96
+      ],
+      "id": "c0e7e5af-192b-489e-b553-d0cce9464a46",
+      "name": "📋 Leer Logs Existentes",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/recipes/1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        592,
+        96
+      ],
+      "id": "d5415a67-1bf8-494f-83e0-8b99d3fb0865",
+      "name": "🌐 Obtener Receta (DummyJSON)"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        800,
+        96
+      ],
+      "id": "a445800e-01c3-45b1-b5ea-c210bc0737a1",
+      "name": "🕐 Capturar Fecha y Hora"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "27951b49-1c1c-4976-90a8-a4e9469ad3fc",
+              "name": "fecha",
+              "value": "={{ $('🕐 Capturar Fecha y Hora').item.json.currentDate }}",
+              "type": "string"
+            },
+            {
+              "id": "b0db728a-e86a-45b3-9f7a-bf38f281b3e8",
+              "name": "Estado",
+              "value": "exitoso",
+              "type": "string"
+            },
+            {
+              "id": "e22c6435-f585-417f-814f-749db884f6d1",
+              "name": "Payload",
+              "value": "={{ JSON.stringify($('🌐 Obtener Receta (DummyJSON)').item.json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1008,
+        96
+      ],
+      "id": "5a205514-fe24-4908-8cb4-4827d3b35b66",
+      "name": "🔧 Armar Objeto de Log"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Registro de Logs",
+          "cachedResultUrl": "YOUR_SPREADSHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "YOUR_SPREADSHEET_URL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $json.fecha }}",
+            "Estado": "={{ $json.Estado }}",
+            "Payload": "={{ $json.Payload }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payload",
+              "displayName": "Payload",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1264,
+        96
+      ],
+      "id": "ddda65fd-fddc-4603-b403-a3b0600966c3",
+      "name": "📝 Guardar Log en Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "📊 REGISTRO DE LOGS - Clase 8\nRegistra cada ejecución en Google Sheets.\nCaptura: fecha, estado y payload de la API.",
+        "height": 368,
+        "width": 1600
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -64,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "fdb456fc-d137-42f3-9b93-1802ddcfff20",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Lee la hoja antes de escribir.\nSi está vacía, el flujo continúa igual.\nActivar \"Always Output Data\" si detiene la ejecución.",
+        "height": 576,
+        "width": 230,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "4c5debd4-87e0-408d-8a90-197488585dd5",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Consume la API pública DummyJSON.\nEndpoint: /recipes/1\nSin autenticación requerida.",
+        "height": 576,
+        "width": 192,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        544,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "06c6083e-6700-4570-b95c-6ca38d2afc92",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Construye el objeto de log con 3 campos:\n- fecha: timestamp del nodo Date & Time\n- Estado: \"exitoso\" (valor fijo)\n- Payload: JSON completo de la receta\n⚠️ Los nombres deben coincidir exactamente con los headers del Sheet.",
+        "height": 576,
+        "width": 256,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        960,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "4f44ca4b-938b-4ce0-91aa-f6807d8560ff",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Escribe una fila nueva en \"Registro de Logs > Hoja 1\".\nMapeo manual columna por columna.",
+        "height": 576,
+        "width": 192,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1232,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "9681f880-0a62-4576-b887-6acd3f90e243",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "🚀 Trigger Manual": {
+      "main": [
+        [
+          {
+            "node": "📋 Leer Logs Existentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Leer Logs Existentes": {
+      "main": [
+        [
+          {
+            "node": "🌐 Obtener Receta (DummyJSON)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🌐 Obtener Receta (DummyJSON)": {
+      "main": [
+        [
+          {
+            "node": "🕐 Capturar Fecha y Hora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🕐 Capturar Fecha y Hora": {
+      "main": [
+        [
+          {
+            "node": "🔧 Armar Objeto de Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 Armar Objeto de Log": {
+      "main": [
+        [
+          {
+            "node": "📝 Guardar Log en Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3702646e-1d3b-4038-b681-51c0e77557ac",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": [
+    {
+      "updatedAt": "2026-02-18T21:16:44.246Z",
+      "createdAt": "2026-02-18T21:16:44.246Z",
+      "id": "YOUR_TAG_ID",
+      "name": "curso ai automation"
+    }
+  ]
+}
