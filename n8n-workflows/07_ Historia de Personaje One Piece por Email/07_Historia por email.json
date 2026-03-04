@@ -1,0 +1,290 @@
+{
+  "name": "Clase 7 — Historia de Personaje One Piece por Email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "coderhouse",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -848,
+        64
+      ],
+      "id": "5dc11f91-7049-468a-a31b-8cab0aaeeb62",
+      "name": "Webhook",
+      "webhookId": "088213e5-6916-43fc-993b-d7e8c3ec05c8"
+    },
+    {
+      "parameters": {
+        "url": "https://api.api-onepiece.com/v2/characters/en/2",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -640,
+        64
+      ],
+      "id": "7d22d292-984e-41c7-ae8d-9a28a6cc0831",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "83b3bd85-df66-4ea3-accc-04d14133c00d",
+              "leftValue": "={{ $('Webhook').item.json.body.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        64
+      ],
+      "id": "4dff3b9e-80f8-407d-8d04-04e44f86adc3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.email }}",
+        "subject": "=Historia de  {{ $('HTTP Request').item.json.name }}",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        -64
+      ],
+      "id": "1a95eda2-e34d-411d-81fd-205d6dae91d6",
+      "name": "Send a message",
+      "webhookId": "2fd51226-98ec-49c6-b4b8-c505227e2248",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>Historia del Personaje</title>\n</head>\n<body style=\"margin:0; padding:0; background-color:#f4f4f4; font-family: Georgia, serif;\">\n\n  <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#f4f4f4; padding: 40px 0;\">\n    <tr>\n      <td align=\"center\">\n        <table width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);\">\n          \n          <!-- HEADER -->\n          <tr>\n            <td style=\"background-color:#1a1a2e; padding: 32px; text-align:center;\">\n              <h1 style=\"margin:0; color:#ff6d5a; font-size:28px; font-family: Georgia, serif; letter-spacing: 1px;\">\n                ⚓ Historia de {{ $('HTTP Request').item.json.name }}\n              </h1>\n              <p style=\"margin: 8px 0 0 0; color:#909399; font-size:14px;\">Una historia generada con Inteligencia Artificial</p>\n            </td>\n          </tr>\n\n          <!-- SALUDO -->\n          <tr>\n            <td style=\"padding: 36px 40px 0px 40px; color:#2c2c2c; font-size:16px; line-height:1.9; text-align:left;\">\n              Hola <strong>{{ $('Webhook').item.json.body.name }}</strong>,\n            </td>\n          </tr>\n\n          <!-- CONTENIDO PRINCIPAL -->\n          <tr>\n            <td style=\"padding: 16px 40px 36px 40px; color:#2c2c2c; font-size:16px; line-height:1.9; text-align:left; white-space: pre-line;\">\n              {{ $json.content.parts[0].text }}\n            </td>\n          </tr>\n\n          <!-- DIVIDER -->\n          <tr>\n            <td style=\"padding: 0 40px;\">\n              <hr style=\"border:none; border-top: 1px solid #eeeeee;\" />\n            </td>\n          </tr>\n\n          <!-- FIRMA -->\n          <tr>\n            <td style=\"padding: 28px 40px; text-align:left; color:#2c2c2c; font-size:15px; line-height:1.8;\">\n              Un abrazo,<br/>\n              <strong style=\"color:#ff6d5a; font-size:17px;\">Aeria Digital</strong>\n            </td>\n          </tr>\n\n          <!-- FOOTER -->\n          <tr>\n            <td style=\"padding: 16px 40px 28px 40px; text-align:center; color:#aaaaaa; font-size:12px;\">\n              Generado automáticamente con <strong style=\"color:#ff6d5a;\">n8n + Gemini</strong> 🤖\n            </td>\n          </tr>\n\n        </table>\n      </td>\n    </tr>\n  </table>\n\n</body>\n</html>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        -64
+      ],
+      "id": "ff9b883a-bc0a-499e-8855-fcd2cfba3533",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Prepara un email con la historia del personaje {{ $json.name }} cuya crew es {{ $json.crew.name }} el job de este personaje es {{ $json.job }} y esta {{ $json.status }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "Escribí una historia sobre {{ $('HTTP Request').item.json.name }}  en estilo storytelling para una persona de 30 a 45 años.  REGLAS IMPORTANTES: - Empezá directamente con el cuerpo de la historia, sin introducciones como \"Claro, aquí tienes...\" ni meta-comentarios - No uses corchetes como [Nombre del Destinatario] ni [Tu Nombre] - No incluyas línea de Asunto - No incluyas saludo inicial ni firma final - No uses separadores como --- - Solo el contenido narrativo puro, en párrafos"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -256,
+        -64
+      ],
+      "id": "4a44e079-06aa-4bb6-87bb-556bdca6ce99",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Disparador\nRecibe una solicitud POST en el path `/coderhouse`.\n\n**Body esperado:**\n```json\n{\n  \"email\": \"destinatario@ejemplo.com\",\n  \"name\": \"Nombre del usuario\"\n}\n```\nSi el campo `email` está vacío, el flujo se detiene en el IF.",
+        "height": 280,
+        "width": 300,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        -32
+      ],
+      "id": "5fa415ae-a80c-41fe-acc8-b849cb531f7e",
+      "name": "📥 Nota — Webhook"
+    },
+    {
+      "parameters": {
+        "content": "## 🌊 API One Piece\nConsulta el personaje con ID fijo `2` de la API pública de One Piece.\n\n**Requiere:** Bearer Token configurado en credenciales.\n**Devuelve:** nombre, crew, job, status del personaje.",
+        "height": 240,
+        "width": 300,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -784,
+        -208
+      ],
+      "id": "31ebc124-186f-4a34-9e48-97f6260163c7",
+      "name": "📥 Nota — API"
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 Generación con IA\nGemini genera una historia en estilo storytelling basada en los datos del personaje.\n\n**Reglas del prompt:**\n- Sin introducciones ni meta-comentarios\n- Sin saludo ni firma\n- Solo narrativa pura en párrafos\n- Tono: adulto de 30–45 años",
+        "height": 260,
+        "width": 300,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        -352
+      ],
+      "id": "96f57aa3-def6-4503-b1d2-84d58a8aa193",
+      "name": "📥 Nota — Gemini"
+    },
+    {
+      "parameters": {
+        "content": "## 📧 Envío de Email\nArma el HTML con la historia generada y lo envía al email recibido en el webhook.\n\n**Diseño:** Header oscuro, fuente serif, firma Aeria Digital.\n**Footer:** menciona n8n + Gemini como generadores.",
+        "height": 220,
+        "width": 300,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -320
+      ],
+      "id": "5753143b-fc94-4be3-ae65-20ba957b3b0f",
+      "name": "📥 Nota — Email"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a57f7bb8-e686-42da-a069-291be42bd423",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": [
+    {
+      "updatedAt": "2026-02-18T21:16:44.246Z",
+      "createdAt": "2026-02-18T21:16:44.246Z",
+      "id": "YOUR_TAG_ID",
+      "name": "curso ai automation"
+    }
+  ]
+}
