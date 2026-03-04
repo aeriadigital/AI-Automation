@@ -1,0 +1,192 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "outputFieldName": "current_date_and_time",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        16
+      ],
+      "id": "d944a9d8-d67e-419c-a4c3-15dcb546c13c",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "jsCode": "const dateFormatter = new Intl.DateTimeFormat(\"es-AR\", {\n  timeZone: \"America/Argentina/Buenos_Aires\",\n  day: \"2-digit\",\n  month: \"2-digit\",\n  year: \"numeric\",\n});\n\nconst timeFormatter = new Intl.DateTimeFormat(\"es-AR\", {\n  timeZone: \"America/Argentina/Buenos_Aires\",\n  hour: \"2-digit\",\n  minute: \"2-digit\",\n  hour12: false,\n});\n\n// formatter SOLO para obtener la hora numérica\nconst hourFormatter = new Intl.DateTimeFormat(\"en-US\", {\n  timeZone: \"America/Argentina/Buenos_Aires\",\n  hour: \"2-digit\",\n  hour12: false,\n});\n\nfor (const item of $input.all()) {\n  const raw = item.json.current_date_and_time;\n  const d = new Date(raw);\n\n  const hourAR = Number(hourFormatter.format(d));\n\n  item.json.formatted_date = dateFormatter.format(d);\n  item.json.formatted_time = timeFormatter.format(d);\n\n  // 👉 variable que querés\n  item.json.afternoon_message_on = hourAR >= 18;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        16
+      ],
+      "id": "43d9d2b9-027d-490a-80bf-633e32688686",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "81bdcbae-e4dd-4acf-9d2a-59ea3af41c40",
+              "leftValue": "={{ $json.afternoon_message_on }}",
+              "rightValue": "2026-02-12T14:37:51",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -320,
+        16
+      ],
+      "id": "4a2b4fab-4b36-4c01-89f2-6726dd0ea0e1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "=TU_EMAIL@gmail.com",
+        "subject": "Horario de oficina cerrado",
+        "emailType": "text",
+        "message": "A la brevedad se comunicara nuestro centro de atencion 24 hs para atender tu consulta ya que nuestros operadores no estan disponibles.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -112,
+        -80
+      ],
+      "id": "96c8d670-19f2-4f80-b2ff-1da92c8f7aed",
+      "name": "Send a message",
+      "webhookId": "73f610cd-d59d-4127-ae9c-6f1175591616",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#nuevo-canal",
+          "mode": "name"
+        },
+        "text": "=Mensaje en bandeja nuevo: {{ $('Gmail Trigger').item.json.From }}\n\nTitulo: {{ $('Gmail Trigger').item.json.Subject }}\nMensaje: {{ $('Gmail Trigger').item.json.snippet }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        64,
+        -80
+      ],
+      "id": "523d4a43-1a14-43ad-8b69-47d5dc4cd0d0",
+      "name": "Send a message2",
+      "webhookId": "4112f8a8-1f86-48d7-b5b7-be19684c6602"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        16
+      ],
+      "id": "07115d86-42e8-4e97-913f-554f3919b6d1",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "05547b24-e6c8-4b4b-8627-948247c549b1",
+  "meta": {
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}
