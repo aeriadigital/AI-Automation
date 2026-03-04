@@ -1,6 +1,6 @@
 # AI-Automation
 
-Colección de workflows de n8n documentados, construidos durante mi proceso de aprendizaje en automatización con IA.
+Colección de workflows de n8n documentados, construidos durante mi proceso de aprendizaje.
 
 ## Estado
 Todos los workflows fueron probados y ejecutados con éxito ✅
@@ -12,16 +12,16 @@ Principiante — ejercicios progresivos del curso de n8n.
 
 ## Workflows disponibles
 
-| # | Nombre | Nodos clave | Descripción breve |
-|---|--------|-------------|-------------------|
-| 01 | [Horario de Oficina](./n8n-workflows/03_horario-oficina/) | DateTime · Code · If · Gmail · Slack | Detecta si es fuera de horario y envía respuesta automática |
-| 02 | [Retry con Sheets](./n8n-workflows/05_retry/) | Form · Google Sheets · If · Loop | Formulario con verificación en Google Sheets y reintento |
-| 03 | [HTTP Request Traductor](./n8n-workflows/06_http-request-traductor/) | HTTP Request · Gemini · If · Gmail | Obtiene chiste aleatorio de API pública y lo traduce al español |
-| 04 | [Envío de Formulario](./n8n-workflows/04_envio-formulario/) | Form Trigger · Gemini · Gmail | Formulario web que genera email personalizado con IA |
-| 05 | [Retry Backoff](./n8n-workflows/07_retry-backoff/) | HTTP Request · If · Wait · Set | Reintentos automáticos con espera exponencial (2s → 4s → 8s) |
-| 06 | [U3 — Recetas con Logs](./n8n-workflows/08_u3-logs-documentacion/) | HTTP Request · Code · If | Bifurcación por rating con logging estructurado en cada nodo |
-| 07 | [Clase 7 — One Piece Email](./n8n-workflows/09_clase7-onepiece-historia/) | Webhook · HTTP Request · Gemini · Gmail | Historia de personaje generada con IA y enviada por email HTML |
-| 08 | [Clase 8 — Registro de Logs](./n8n-workflows/10_clase8-registro-logs/) | Google Sheets · HTTP Request · DateTime | Guarda cada ejecución como fila de log en Google Sheets |
+| # | Carpeta | Nodos clave | Descripción breve |
+|---|---------|-------------|-------------------|
+| 01 | [01_fecha-y-hora](./n8n-workflows/01_fecha-y-hora/) | DateTime · Code · If · Gmail · Slack | Detecta si es fuera de horario y envía respuesta automática |
+| 02 | [02_retry](./n8n-workflows/02_retry/) | Form Trigger · Google Sheets · If · Loop | Formulario con verificación en Google Sheets y reintento |
+| 03 | [03_http request traductor](./n8n-workflows/03_http%20request%20traductor/) | HTTP Request · Gemini · If · Gmail | Obtiene chiste aleatorio de API pública y lo traduce al español |
+| 04 | [04_envio-formulario](./n8n-workflows/04_envio-formulario/) | Form Trigger · Gemini · Gmail | Formulario web que genera email personalizado con IA |
+| 05 | [05_retry_backoff](./n8n-workflows/05_retry_backoff/) | HTTP Request · If · Wait · Set | Reintentos automáticos con espera exponencial (2s → 4s → 8s) |
+| 06 | [06_Get receta con Logs y documentacion](./n8n-workflows/06_Get%20receta%20con%20Logs%20y%20documentacion/) | HTTP Request · Code · If | Bifurcación por rating con logging estructurado en cada nodo |
+| 07 | [07_ Historia de Personaje One Piece por Email](./n8n-workflows/07_%20Historia%20de%20Personaje%20One%20Piece%20por%20Email/) | Webhook · HTTP Request · Gemini · Gmail | Historia de personaje generada con IA y enviada por email HTML |
+| 08 | [08_registro de logs](./n8n-workflows/08_registro%20de%20logs/) | Google Sheets · HTTP Request · DateTime | Guarda cada ejecución como fila de log en Google Sheets |
 
 ---
 
@@ -31,13 +31,14 @@ Principiante — ejercicios progresivos del curso de n8n.
 AI-Automation/
 ├── README.md
 └── n8n-workflows/
-    ├── 01_horario-oficina/
-    │   ├── workflow.json
-    │   └── README.md
-    ├── 02_envio-formulario/
-    │   ├── workflow.json
-    │   └── README.md
-    └── ...
+    ├── 01_fecha-y-hora/
+    ├── 02_retry/
+    ├── 03_http request traductor/
+    ├── 04_envio-formulario/
+    ├── 05_retry_backoff/
+    ├── 06_Get receta con Logs y documentacion/
+    ├── 07_ Historia de Personaje One Piece por Email/
+    └── 08_registro de logs/
 ```
 
 Cada carpeta contiene:
