@@ -24,11 +24,11 @@
 ```
 
 ## Cómo funciona
-1. Webhook recibe POST en `/coderhouse` con email y nombre
+1. Webhook recibe POST en `/xxxxx` con email y nombre
 2. Consulta el personaje ID `2` de la API de One Piece
 3. Verifica que el email no esté vacío
 4. **Si tiene email** → Gemini genera historia en estilo storytelling → se arma el HTML → se envía por Gmail
 5. **Si no tiene email** → el flujo se detiene (rama false sin acción)
 
 ## Diseño del email
-Header oscuro con nombre del personaje, cuerpo con la historia generada, firma **Aeria Digital** y footer que menciona n8n + Gemini como generadores.
+Header oscuro con nombre del personaje, cuerpo con la historia generada, firma **** y footer que menciona n8n + Gemini como generadores.
