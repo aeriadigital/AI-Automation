@@ -1,4 +1,4 @@
-# 03 · Horario de Oficina — Respuesta Automática por Email
+# Horario de Oficina — Respuesta Automática por Email
 
 **Descripción:** Detecta si el horario actual está fuera del horario de oficina (después de las 18hs, Argentina) y envía automáticamente un email de respuesta avisando que los operadores no están disponibles. Luego notifica en un canal de Slack.
 
