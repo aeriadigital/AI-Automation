@@ -1,4 +1,4 @@
-# 09 · — Historia de Personaje One Piece por Email
+#  Historia de Personaje One Piece por Email
 
 **Descripción:** Recibe una solicitud vía Webhook con nombre y email del destinatario, consulta la API de One Piece para obtener datos de un personaje, genera una historia personalizada en estilo storytelling con Gemini y la envía por email con diseño HTML.
 
