@@ -1,4 +1,4 @@
-# 08 · U3 — Recetas con Logs y Documentación
+# Recetas con Logs y Documentación
 
 **Descripción:** Obtiene una receta desde una API pública, evalúa su rating y bifurca el flujo: si es destacada (≥ 4.5) busca sus comentarios, si no busca recetas alternativas de tipo dessert. Cada paso registra logs estructurados para trazabilidad completa.
 
