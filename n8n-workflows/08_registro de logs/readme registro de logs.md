@@ -1,4 +1,4 @@
-# 10 · Registro de Logs en Google Sheets
+# · Registro de Logs en Google Sheets
 
 **Descripción:** Obtiene una receta desde una API pública, captura la fecha y hora de ejecución, arma un objeto de log estructurado y lo guarda como fila nueva en un Google Sheet. También lee los logs existentes antes de escribir para mantener trazabilidad del historial.
 
