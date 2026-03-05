@@ -1,4 +1,4 @@
-# 07 · Retry Backoff — Reintentos con Espera Exponencial
+# Retry Backoff — Reintentos con Espera Exponencial
 
 **Descripción:** Llama a una API de zona horaria y maneja fallos automáticamente con hasta 3 reintentos y espera exponencial (2s → 4s → 8s). Distingue errores de red de respuestas HTTP 200 con body inválido.
 
