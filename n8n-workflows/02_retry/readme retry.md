@@ -1,6 +1,6 @@
 Ejercicio en desarrollo. Base para prueba de loops.
 
-# 05 · Retry — Formulario con Verificación en Google Sheets y Reintento
+# Retry — Formulario con Verificación en Google Sheets y Reintento
 
 **Descripción:** Extiende el flujo de formulario con IA incorporando una verificación contra Google Sheets antes de generar el email. Si el registro existe, procede con la personalización vía Gemini. Si no, ejecuta un flujo alternativo con lógica en Python, condición secundaria y un loop de reintento.
 
