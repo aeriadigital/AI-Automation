@@ -1,4 +1,4 @@
-# 06 · HTTP Request Traductor — Chiste Aleatorio Traducido al Español
+# HTTP Request Traductor — Chiste Aleatorio Traducido al Español
 
 **Descripción:** Consume una API pública para obtener un chiste aleatorio en inglés, lo traduce al español usando Gemini, evalúa el contenido con una condición y envía el resultado por email.
 
