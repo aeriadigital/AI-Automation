@@ -1,0 +1,193 @@
+{
+  "name": "Historia Diaria con Gemini",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0],
+      "id": "9e7c6082-351b-4a0f-a34a-7f724eef3544",
+      "name": "Schedule Trigger",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/todos/1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [208, 0],
+      "id": "3d57f9a3-50b3-4858-8124-b1a532a0db5d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Usa el siguiente contenido como base para crear una historia breve \ncon impacto emocional en español:\n{{ $json.todo }}\n\nInstrucciones:\n- El contenido original puede estar en inglés, tradúcelo e intégralo naturalmente.\n- Construye una narrativa coherente y humana a partir del contenido recibido.\n- No resumas literalmente; transforma la información en una escena concreta.\n- Agrega contexto emocional y un pequeño momento de conciencia o aprendizaje.\n- Tono cálido, reflexivo y auténtico.\n- Extensión total: entre 150 y 300 palabras.\n- No uses emojis.\n- No uses listas ni formato markdown.\n\nEstructura:\n1. Introducción con una escena clara.\n2. Desarrollo con un pequeño conflicto o insight.\n3. Cierre emocional.\n4. Última línea separada con una frase inspiradora en español \n   (máximo 12 palabras, clara y accionable).\n\nEntrega únicamente la historia final lista para enviar por email."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "Actúa como un narrador sensible y reflexivo especializado en micro-historias con impacto emocional. Tu tarea es escribir una historia breve que conecte con experiencias humanas universales como la empatía, el amor, la resiliencia, la gratitud o la generosidad. Objetivo: - Generar identificación emocional. - Mostrar una situación cotidiana con profundidad simbólica. - Concluir con una frase inspiradora clara y directa en español. Lineamientos de estilo: - Tono cálido, humano y auténtico. - Lenguaje simple pero evocador. - No usar clichés motivacionales evidentes. - No utilizar emojis. - No usar listas ni formato markdown. - Extensión total: entre 150 y 300 palabras. - Narración en tercera persona o primera persona, según fluya mejor. Estructura: 1. Introducción que sitúe una escena concreta y cotidiana. 2. Desarrollo donde aparezca un pequeño conflicto, aprendizaje o momento de conciencia. 3. Cierre emocional. 4. Última línea separada que contenga solo una frase breve e inspiradora en español (máximo 12 palabras). No menciones que eres una IA. No expliques el proceso. Entrega únicamente la historia final lista para publicar."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [448, 0],
+      "id": "dbda8951-9250-42a4-a8c2-d9bf3378edea",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Gemini(PaLM) Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "your@email.com",
+        "subject": "=Historia del día {{ $('Schedule Trigger').item.json['Readable date'] }}",
+        "emailType": "text",
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [800, 0],
+      "id": "a9d351cf-ef8d-4a08-a04c-3ebd29e0832f",
+      "name": "Send a message",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "📌 NODO 1 — TRIGGER AUTOMÁTICO\n──────────────────────────────\nTipo: Schedule Trigger\nEjecución: todos los días a las 15:00 hs\nTimezone: America/Argentina/Buenos_Aires (UTC-03:00)\n\nNo requiere credenciales.\nInicia la cadena completa del workflow.",
+        "height": 270,
+        "width": 270,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-96, -320],
+      "typeVersion": 1,
+      "id": "aa061660-5abb-4d0c-9b02-49e84cc0d9eb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "📌 NODO 2 — API PÚBLICA\n──────────────────────────────\nServicio: dummyjson.com\nURL: https://dummyjson.com/todos/1\nMétodo: GET\nAutenticación: ninguna (API pública y gratuita)\n\nDevuelve un JSON con el campo \"todo\" en inglés.\nEse campo es el input que recibe Gemini.\n\nRotación de credenciales: no aplica.\nControl de acceso: no aplica.\nNo se transmiten datos sensibles.",
+        "height": 310,
+        "width": 290
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [160, -360],
+      "typeVersion": 1,
+      "id": "f5fc6ad3-1771-4629-ab4e-47b248e01c4b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "📌 NODO 3 — GEMINI 2.5 FLASH\n──────────────────────────────\nServicio: Google Gemini API\nModelo: gemini-2.5-flash\nAutenticación: API Key\nCredencial en n8n: Google Gemini(PaLM) Api\n\nFunción: transforma el campo \"todo\" (en inglés)\nen una micro-historia con impacto emocional en español.\n\nSeguridad activa:\n→ La API Key NO está expuesta en el workflow.\n   n8n almacena solo el ID de referencia.\n→ La clave real está encriptada con AES-256\n   en la base de datos de n8n.\n\nPolítica de rotación (a implementar):\n→ Rotar la API Key cada 90 días.\n→ Procedimiento:\n   1. Generar nueva key en aistudio.google.com\n   2. Actualizar en n8n → Settings → Credentials\n   3. Ejecutar prueba para verificar\n   4. Revocar la clave anterior",
+        "height": 500,
+        "width": 330,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [400, -560],
+      "typeVersion": 1,
+      "id": "5455c305-9cbb-4f26-9bba-0fe2dd022cdb",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "📌 NODO 4 — GMAIL\n──────────────────────────────\nServicio: Gmail\nAutenticación: OAuth 2.0\nCredencial en n8n: Gmail account\n\nFunción: envía la historia generada por Gemini\nal destinatario configurado.\n\nSeguridad activa:\n→ OAuth 2.0: el usuario autoriza el acceso\n   sin exponer contraseñas.\n→ El access token se renueva automáticamente\n   mediante refresh token.\n→ Token encriptado en n8n (AES-256).\n→ No requiere rotación manual.\n\nControl de acceso:\n→ Solo el Owner del workspace puede\n   ver o editar esta credencial.\n→ Un Member puede ejecutar el workflow\n   sin acceder al token en ningún momento.",
+        "height": 390,
+        "width": 310
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [740, -440],
+      "typeVersion": 1,
+      "id": "6cd13c89-17ea-4e97-a1e2-4c619bcc12da",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "🔐 RESUMEN DE SEGURIDAD DEL WORKFLOW\n══════════════════════════════════════\nWorkflow: Historia diaria con Gemini\nFlujo: Schedule → HTTP Request → Gemini → Gmail\n\nMÉTODOS DE AUTENTICACIÓN\n→ dummyjson API: sin autenticación (pública)\n→ Gemini API: API Key (Google AI Studio)\n→ Gmail: OAuth 2.0\n\nALMACENAMIENTO DE CREDENCIALES\n→ Todas las credenciales están encriptadas\n   con AES-256 dentro de n8n.\n→ El workflow solo guarda IDs de referencia,\n   nunca las claves en texto plano.\n\nPOLÍTICA DE ROTACIÓN\n→ Gemini API Key: rotación manual cada 90 días\n→ Gmail OAuth token: renovación automática\n→ dummyjson: no aplica\n\nCONTROL DE ACCESO\n→ Principio de mínimo privilegio:\n   cada usuario accede solo a lo necesario.\n→ Owner: puede ver y editar credenciales.\n→ Member: puede ejecutar, sin ver credenciales.\n→ Recomendación: crear credenciales separadas\n   para entorno DEV y entorno PROD.",
+        "height": 500,
+        "width": 390,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-640, -320],
+      "typeVersion": 1,
+      "id": "5c472acf-eb0a-4383-a8a0-79c1bd83ef3f",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "curso ai automation"
+    }
+  ]
+}
