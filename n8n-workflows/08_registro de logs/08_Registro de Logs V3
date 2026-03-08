@@ -1,0 +1,362 @@
+{
+  "name": "Clase 8_ Ejercicio de Registro de logs_v3_ok",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [16, 96],
+      "id": "7e2e6640-2886-4e7a-a98e-46191d47d80f",
+      "name": "🚀 Trigger Manual"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Registro de Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [432, -32],
+      "id": "1b0e129f-d12b-4f17-99d4-dabddab79139",
+      "name": "📋 Leer Logs Existentes",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://dummyjson.com/recipes/roto",
+        "options": { "timeout": 5000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [224, 96],
+      "id": "747ae716-d47b-4d76-a2dd-8f842ab62948",
+      "name": "🌐 Obtener Receta (DummyJSON)",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": { "options": {} },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [800, -16],
+      "id": "af220e4c-6317-491f-bd4e-cdf9665b70ee",
+      "name": "🕐 Capturar Fecha y Hora"
+    },
+    {
+      "parameters": {
+        "content": "📊 REGISTRO DE LOGS - Clase 8\nAutomatización resiliente con manejo de errores.\nCaptura: fecha, estado, payload, error_detalle y order_id.\nRama exitosa: valida idempotencia antes de guardar.\nRama error: delay → log → alerta por Gmail.",
+        "height": 576,
+        "width": 198
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-32, -288],
+      "typeVersion": 1,
+      "id": "9a04c8e4-fd08-4208-85be-c20c1844d690",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Leer Logs\nLee registros existentes antes de escribir.\nAlimenta el chequeo de idempotencia.\nAlways Output Data activado para evitar\nque detenga el flujo si la hoja está vacía.",
+        "height": 576,
+        "width": 166,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [400, -288],
+      "typeVersion": 1,
+      "id": "362e79b9-4490-45d9-a823-ee7ac7991ea4",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Consume la API pública DummyJSON.\nEndpoint: /recipes/1\nSin autenticación requerida.\nRetry On Fail: 3 intentos, 2s entre cada uno.\nOn Error: continúa por rama de error.",
+        "height": 576,
+        "width": 208,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [176, -288],
+      "typeVersion": 1,
+      "id": "2b3d1507-cb28-4033-80e4-9b561c2704d2",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Escribe una fila nueva en \"Registro de Logs > Hoja 1\".\nSolo llega acá si el order_id NO existe previamente.\nCampos: fecha, Estado, Payload, order_id.\nMapeo manual columna por columna.",
+        "height": 368,
+        "width": 480,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [960, -176],
+      "typeVersion": 1,
+      "id": "4cd897c6-3cd3-4d0d-a3ae-07b312869e93",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f215811e-d9dc-4c8e-802b-9afa2b77b96a",
+              "name": "fecha",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "8cb1a5b1-fb07-4901-8211-30d2e4308b96",
+              "name": "Estado",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "266d0c48-fa4b-4e62-bbfa-c9548a7e958c",
+              "name": "Payload",
+              "value": "={{ $json.error.message }}",
+              "type": "string"
+            },
+            {
+              "id": "1535e634-28f7-4b15-b8ea-cdcbce108ddf",
+              "name": "error_detalle",
+              "value": "={{ $json.error.code }}- Status: {{ $json.error.status }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1008, 368],
+      "id": "cb61e428-5dfa-4a54-8f9d-87780ffb886a",
+      "name": "🔴 Armar Log Error"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "27951b49-1c1c-4976-90a8-a4e9469ad3fc",
+              "name": "fecha",
+              "value": "={{ $('🕐 Capturar Fecha y Hora').item.json.currentDate }}",
+              "type": "string"
+            },
+            {
+              "id": "b0db728a-e86a-45b3-9f7a-bf38f281b3e8",
+              "name": "Estado",
+              "value": "exitoso",
+              "type": "string"
+            },
+            {
+              "id": "e22c6435-f585-417f-814f-749db884f6d1",
+              "name": "Payload",
+              "value": "={{ JSON.stringify($('🌐 Obtener Receta (DummyJSON)').item.json) }}",
+              "type": "string"
+            },
+            {
+              "id": "28775208-31a6-4104-bd5b-99892536cd33",
+              "name": "order_id",
+              "value": "={{ $('🌐 Obtener Receta (DummyJSON)').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1024, -16],
+      "id": "6fd021c0-30e0-49b7-b0df-8536ba3e269e",
+      "name": "✅ Armar Log Exitoso"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_SPREADSHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Registro de Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $json.fecha }}",
+            "Estado": "={{ $json.Estado }}",
+            "Payload": "={{ $json.Payload }}",
+            "order_id": "={{ $json.order_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": "fecha", "displayName": "fecha", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Estado", "displayName": "Estado", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "Payload", "displayName": "Payload", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "error_detalle", "displayName": "error_detalle", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1232, 368],
+      "id": "2ce5308c-9ca4-485c-aab1-64db267ef155",
+      "name": "🔴 Guardar Error en Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL@gmail.com",
+        "subject": "=⚠️ Error en workflow: {{ $workflow.name }}",
+        "message": "=<h2>⚠️ Error detectado</h2>\n<p><b>Workflow:</b> {{ $workflow.name }}</p>\n<p><b>Fecha:</b> {{ $('🔴 Armar Log Error').item.json.fecha }}</p>\n<p><b>Error:</b> {{ $('🔴 Armar Log Error').item.json.Payload }}</p>\n<p><b>Detalle:</b> {{ $('🔴 Armar Log Error').item.json.error_detalle }}</p>\n<hr>\n<p>Revisá el registro completo en Google Sheets.</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [1504, 368],
+      "id": "2c45eb32-6e7a-4269-998e-227a66932bd5",
+      "name": "📧 Alerta Error por Gmail",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Rama de error: se activa cuando la API falla.\nDelay de 5s antes de loggear.\nRegistra: fecha, Estado=error, Payload, error_detalle.\nEnvía alerta por Gmail con detalle del fallo.",
+        "height": 336,
+        "width": 720,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [960, 208],
+      "typeVersion": 1,
+      "id": "2a8bee02-9676-4dd3-adf1-c350fb6ddcda",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2ae7fde-4ea9-4fd8-9cda-2f7f7ae6511a",
+              "leftValue": "={{ $('📋 Leer Logs Existentes').all().some(row => row.json.order_id == $('🌐 Obtener Receta (DummyJSON)').item.json.id) }}",
+              "rightValue": "true",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [592, -32],
+      "id": "38c3716f-5643-40d6-afde-d14384e73cdc",
+      "name": "Idempotencia"
+    },
+    {
+      "parameters": { "errorMessage": "La receta ya fue cargada" },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [800, -160],
+      "id": "6328109b-0d99-4426-b76d-ce0df038272d",
+      "name": "Evitar duplicados"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [624, 368],
+      "id": "408c627a-0f65-4ada-9515-c6dbad0a7dc7",
+      "name": "⏳ Delay antes de loggear error",
+      "webhookId": "YOUR_WEBHOOK_ID_2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "🚀 Trigger Manual": { "main": [[{ "node": "🌐 Obtener Receta (DummyJSON)", "type": "main", "index": 0 }]] },
+    "📋 Leer Logs Existentes": { "main": [[{ "node": "Idempotencia", "type": "main", "index": 0 }]] },
+    "🌐 Obtener Receta (DummyJSON)": {
+      "main": [
+        [{ "node": "📋 Leer Logs Existentes", "type": "main", "index": 0 }],
+        [{ "node": "⏳ Delay antes de loggear error", "type": "main", "index": 0 }]
+      ]
+    },
+    "🕐 Capturar Fecha y Hora": { "main": [[{ "node": "✅ Armar Log Exitoso", "type": "main", "index": 0 }]] },
+    "🔴 Armar Log Error": { "main": [[{ "node": "🔴 Guardar Error en Sheet", "type": "main", "index": 0 }]] },
+    "✅ Armar Log Exitoso": { "main": [[{ "node": "✅ Guardar Log en Sheet", "type": "main", "index": 0 }]] },
+    "🔴 Guardar Error en Sheet": { "main": [[{ "node": "📧 Alerta Error por Gmail", "type": "main", "index": 0 }]] },
+    "Idempotencia": {
+      "main": [
+        [{ "node": "Evitar duplicados", "type": "main", "index": 0 }],
+        [{ "node": "🕐 Capturar Fecha y Hora", "type": "main", "index": 0 }]
+      ]
+    },
+    "⏳ Delay antes de loggear error": { "main": [[{ "node": "🔴 Armar Log Error", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5eed9cc1-2579-498d-9a0d-b18273b93360",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "id": "xFUFv787t7v4kMPd",
+  "tags": [
+    {
+      "updatedAt": "2026-02-18T21:16:44.246Z",
+      "createdAt": "2026-02-18T21:16:44.246Z",
+      "id": "YOUR_TAG_ID",
+      "name": "curso ai automation"
+    }
+  ]
+}
