@@ -1,0 +1,334 @@
+{
+  "name": "Pre-entrega 10_03 Michel Andrea",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e2b2818d-ce9e-4b00-8838-17957dfaa6b4",
+      "name": "Trigger - Cada 6 Horas"
+    },
+    {
+      "parameters": {
+        "url": "https://catfact.ninja/fact",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "836ccc90-0664-48e6-b7e9-bcbd634947c5",
+      "name": "API - Cat Fact"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e9bd6e57-357a-4b0e-8961-67bb412195bd",
+              "leftValue": "={{ $json.longitud }}",
+              "rightValue": 100,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        736,
+        0
+      ],
+      "id": "09c9b8ba-d142-4f17-8ba9-1017c73b4fcf",
+      "name": "IF - ¿Fact > 100 caracteres?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fba825bb-dfd6-4675-a830-959d884dcd37",
+              "name": "fact",
+              "value": "={{ $json.fact }}",
+              "type": "string"
+            },
+            {
+              "id": "df5b0deb-158b-4d11-8682-7cc2e49e82fb",
+              "name": "longitud",
+              "value": "={{ $json.length }}",
+              "type": "string"
+            },
+            {
+              "id": "ba2baca8-6049-496c-81ea-48abd64973dc",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "c7d8c63d-39b1-4d80-abea-b948a6005211",
+              "name": "fuente",
+              "value": "=catfact.ninja",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        0
+      ],
+      "id": "bcb6e1fb-8103-44c9-9429-f128f3aef238",
+      "name": "Set - Normalizar Fact"
+    },
+    {
+      "parameters": {
+        "errorMessage": "NO OPERATION — Fact Ignorado"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        976,
+        96
+      ],
+      "id": "f25483a9-0b87-42f0-8f75-3a4b2cfbd067",
+      "name": "NoOp - Fact Ignorado"
+    },
+    {
+      "parameters": {
+        "sendTo": "TU_EMAIL@gmail.com",
+        "subject": "=Dato curioso del día {{ $('Trigger - Cada 6 Horas').item.json['Readable date'] }}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n  <meta charset=\"UTF-8\">\n  <style>\n    body {\n      font-family: 'Segoe UI', Arial, sans-serif;\n      background-color: #f4f6f8;\n      margin: 0;\n      padding: 30px;\n    }\n\n    .container {\n      max-width: 600px;\n      margin: 0 auto;\n      background-color: #ffffff;\n      border-radius: 12px;\n      overflow: hidden;\n      box-shadow: 0 4px 12px rgba(0,0,0,0.08);\n    }\n\n    .header {\n      background-color: #1a1a2e;\n      padding: 30px;\n      text-align: center;\n    }\n\n    .header h1 {\n      color: #ffffff;\n      font-size: 24px;\n      margin: 0;\n      letter-spacing: 1px;\n    }\n\n    .header p {\n      color: #a0aec0;\n      font-size: 13px;\n      margin: 6px 0 0;\n    }\n\n    .badge {\n      display: inline-block;\n      background-color: #f6ad55;\n      color: #1a1a2e;\n      font-size: 11px;\n      font-weight: bold;\n      padding: 4px 12px;\n      border-radius: 20px;\n      margin-top: 10px;\n      letter-spacing: 0.5px;\n    }\n\n    .fact-box {\n      background-color: #f0f4ff;\n      border-left: 5px solid #5a67d8;\n      margin: 30px;\n      padding: 20px 24px;\n      border-radius: 8px;\n    }\n\n    .fact-box p {\n      font-size: 16px;\n      color: #2d3748;\n      line-height: 1.7;\n      margin: 0;\n      font-style: italic;\n    }\n\n    .meta {\n      margin: 0 30px 30px;\n      display: table;\n      width: calc(100% - 60px);\n      border-collapse: separate;\n      border-spacing: 0 8px;\n    }\n\n    .meta-row {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      background-color: #f7fafc;\n      border-radius: 8px;\n      padding: 10px 16px;\n      margin-bottom: 8px;\n    }\n\n    .meta-label {\n      font-size: 12px;\n      color: #718096;\n      font-weight: 600;\n      text-transform: uppercase;\n      letter-spacing: 0.5px;\n    }\n\n    .meta-value {\n      font-size: 13px;\n      color: #2d3748;\n      font-weight: 500;\n    }\n\n    .footer {\n      background-color: #f7fafc;\n      padding: 16px 30px;\n      text-align: center;\n      border-top: 1px solid #e2e8f0;\n    }\n\n    .footer p {\n      font-size: 11px;\n      color: #a0aec0;\n      margin: 0;\n    }\n\n    .footer span {\n      color: #5a67d8;\n      font-weight: 600;\n    }\n  </style>\n</head>\n<body>\n\n  <div class=\"container\">\n\n    <!-- HEADER -->\n    <div class=\"header\">\n      <h1>🐱 Cat Fact del Día</h1>\n      <p>Dato curioso seleccionado automáticamente</p>\n      <span class=\"badge\">✦ FACT DESTACADO</span>\n    </div>\n\n    <!-- FACT PRINCIPAL -->\n    <div class=\"fact-box\">\n      <p>{{ $json.fact }}</p>\n    </div>\n\n    <!-- METADATA -->\n    <div class=\"meta\">\n\n      <div class=\"meta-row\">\n        <span class=\"meta-label\">Longitud </span>\n        <span class=\"meta-value\"> {{ $json.longitud }} caracteres</span>\n      </div>\n\n      <div class=\"meta-row\">\n        <span class=\"meta-label\">Fuente </span>\n        <span class=\"meta-value\"> {{ $json.fuente }}</span>\n      </div>\n\n      <div class=\"meta-row\">\n        <span class=\"meta-label\">Registrado </span>\n        <span class=\"meta-value\"> {{ $json.timestamp }}</span>\n      </div>\n\n    </div>\n\n    <!-- FOOTER -->\n    <div class=\"footer\">\n      <p>Mensaje generado automáticamente por <span>n8n workflow</span> · No respondas este correo.</p>\n    </div>\n\n  </div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        -112
+      ],
+      "id": "597d3c7f-20b6-4853-8b2b-b70d523f5cfe",
+      "name": "GMAIL — Notificación por Email"
+    },
+    {
+      "parameters": {
+        "content": "TRIGGER — Schedule\n━━━━━━━━━━━━━━\nTipo: Schedule Trigger\nFrecuencia: cada 6 horas\n\nDispara el workflow automáticamente.\nNo requiere intervención manual.\n\n▸ Buena práctica: activar el workflow\n  solo cuando esté listo para producción.",
+        "height": 480,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "a48c08bd-ee37-4257-9ea0-0d8b4934f771",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "HTTP REQUEST — Cat Fact API\n━━━━━━━━━━\nMétodo: GET\nURL: https://catfact.ninja/fact\nAutenticación: ninguna\n\nDevuelve:\n  · fact    → texto del dato curioso\n  · length  → longitud del texto\n\n▸ API pública, sin token, sin headers extra.\n",
+        "height": 480,
+        "width": 192,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        176,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "9d4b4968-8719-496b-b6b7-3e33387a2e88",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "WORKFLOW: Cat Fact Diario con Alerta por Email\n━━━━━━━━━━━━━━\n\nAutor: Andrea\nVersión: 1.0 — Pre-entrega\nFecha: Marzo 2026\n\nDESCRIPCIÓN:\nCada 6 horas consume la API pública catfact.ninja,\nnormaliza el dato recibido y evalúa si el fact supera\nlos 100 caracteres. Si la condición se cumple, envía\nuna notificación automática por Gmail.\n\nAPI utilizada: https://catfact.ninja/fact\nSin autenticación requerida.",
+        "height": 528
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -528,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "82974d7a-0202-41e9-b452-79e4e3a96799",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Normalizar Datos\n━━━━━━━━━━\nExtrae y renombra los campos relevantes\npara simplificar los nodos siguientes.\n\nCampos generados:\n  · fact       → $json.fact\n  · longitud   → $json.length\n  · timestamp  → $now.toISO()\n  · fuente     → \"catfact.ninja\" (estático)\n\n▸ Buena práctica: nunca pasar estructuras anidadas al IF o al nodo de notificación.",
+        "height": 480,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        384,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "8c7a3a2d-33c0-4cdc-b0c3-e8b64b7ce86c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "IF — Condicional de Longitud\n━━━━━━━━━━━━━━\nEvalúa: $json.longitud > 100\n\nTRUE  → El fact es extenso → notificar\nFALSE → El fact es corto   → ignorar\n\n⚙️ \"Convert types where required\": ON\nConvierte automáticamente strings a números antes de comparar. Evita fallos silenciosos si el tipo de dato cambia en la API.\n\n▸ Buena práctica: activarlo siempre en comparaciones numéricas como defensa ante cambios de tipo inesperados.",
+        "height": 592,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        672,
+        -432
+      ],
+      "typeVersion": 1,
+      "id": "19eb88af-ec89-4b11-83dd-87f97c2ed12e",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "GMAIL — Notificación por Email\n━━━━━━━━━━━━━━\nOperación: Send Email\nTipo de mensaje: HTML\nCredencial: Gmail OAuth2\n\nEnvía el fact destacado con:\n  · Texto del fact\n  · Longitud en caracteres\n  · Fuente y timestamp\n\n▸ Credencial configurada en el gestor de n8n. No expuesta en el workflow.",
+        "height": 496,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        928,
+        -432
+      ],
+      "typeVersion": 1,
+      "id": "6306d414-d67a-46d1-bfb2-1cfc3e6e2144",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "NO OPERATION — Fact Ignorado\n━━━━━━━━━━━━━━━━━━━\nRama FALSE del condicional.\n\nNo ejecuta ninguna acción.\nCierra el flujo limpiamente para que\nla ejecución quede registrada en los logs\naunque no se haya enviado ningún email.\n\n▸ Buena práctica: siempre cerrar ambas\n  ramas del IF explícitamente.",
+        "height": 272,
+        "width": 320,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1104,
+        96
+      ],
+      "typeVersion": 1,
+      "id": "cf83bb38-feba-479e-97ed-f34dd5dddbd1",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {
+    "Trigger - Cada 6 Horas": [
+      {
+        "json": {
+          "timestamp": "2026-03-08T14:36:54.824-03:00",
+          "Readable date": "8 de marzo de 2026, 2:36:54 pm",
+          "Readable time": "2:36:54 pm",
+          "Day of week": "Domingo",
+          "Year": "2026",
+          "Month": "Marzo",
+          "Day of month": "08",
+          "Hour": "14",
+          "Minute": "36",
+          "Second": "54",
+          "Timezone": "America/Argentina/Buenos_Aires (UTC-03:00)"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Trigger - Cada 6 Horas": {
+      "main": [
+        [
+          {
+            "node": "API - Cat Fact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API - Cat Fact": {
+      "main": [
+        [
+          {
+            "node": "Set - Normalizar Fact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - ¿Fact > 100 caracteres?": {
+      "main": [
+        [
+          {
+            "node": "GMAIL — Notificación por Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "NoOp - Fact Ignorado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Normalizar Fact": {
+      "main": [
+        [
+          {
+            "node": "IF - ¿Fact > 100 caracteres?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b112e0d8-d5c1-4fa8-a3ba-532a3a995841",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "INSTANCE_ID_REDACTED"
+  },
+  "id": "b0UeZ4BQ2DWftIJY-bR8p",
+  "tags": []
+}
