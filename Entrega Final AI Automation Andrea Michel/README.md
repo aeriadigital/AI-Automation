@@ -127,8 +127,8 @@ Agregás estas filas una por una en `Sentiment tweets` y esperás ~1 minuto entr
 | tweet_text | usuario | fecha |
 |---|---|---|
 | Pésimo servicio, llevo 3 días esperando y nadie contesta | TestUser1 | 28/03/2026 |
-| Excelente atención, el producto llegó antes de lo esperado | TestUser2 | 28/03/2026 |
 | Hoy recibí mi pedido, todo en orden | TestUser3 | 28/03/2026 |
+| Usé el producto por primera vez hoy | TestNeutral | 29/03/2026 |
 
 ### Qué verificar
 - Tweet negativo → llega email a tu Gmail + fila roja en Registro
@@ -152,10 +152,9 @@ El workflow contempla dos escenarios de fallo:
 
 | Archivo | Descripción |
 |---|---|
-| `workflow.json` | Workflow exportado desde n8n |
+| `workflow_ENTREGA_FINAL.json` | Workflow exportado desde n8n |
 | `prompts.txt` | Prompts usados en LLM 1 y LLM 2 |
-| `documentacion.pdf` | Diagrama y descripción técnica |
-| `evidencias/` | Capturas de las 3 ejecuciones de prueba |
+| `Documentacionyevidencias.pdf` | Diagrama y descripción técnica y Capturas de pantalla |
 | `README.md` | Este archivo |
 
 ---
