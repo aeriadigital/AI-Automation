@@ -1,0 +1,784 @@
+{
+  "name": "LLM Automation Entrega v3",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-tweet",
+              "name": "tweet_text",
+              "type": "string",
+              "value": "={{ $json.tweet_text }}"
+            },
+            {
+              "id": "assign-usuario",
+              "name": "usuario",
+              "type": "string",
+              "value": "={{ $json.usuario ?? 'desconocido' }}"
+            },
+            {
+              "id": "assign-fecha",
+              "name": "fecha",
+              "type": "string",
+              "value": "={{ $json.fecha ?? $now.toISO() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4ff64680-5944-4f22-9f3e-665d3f940362",
+      "name": "📋 Preparar Datos del Tweet",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -688,
+        672
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraer texto según el modelo que uses (Gemini o OpenAI)\nconst data = $input.item.json;\n\n// Gemini: content.parts[0].text\n// OpenAI: message.content\n// Fallback: content directo como string\nlet rawContent =\n  data?.content?.parts?.[0]?.text ??   // Gemini\n  data?.message?.content ??             // OpenAI\n  data?.content ??                       // genérico\n  '';\n\n// Garantizar que sea string pase lo que pase\nrawContent = String(rawContent ?? '').trim();\n\nlet sentiment = 'NEUTRAL';\nlet score = 0.5;\nlet parseError = false;\n\ntry {\n  const cleaned = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n\n  const validValues = ['POSITIVO', 'NEGATIVO', 'NEUTRAL'];\n  if (parsed.sentiment && validValues.includes(parsed.sentiment.toUpperCase())) {\n    sentiment = parsed.sentiment.toUpperCase();\n    score = typeof parsed.score === 'number' ? parsed.score : 0.5;\n  } else {\n    const upper = rawContent.toUpperCase();\n    if (upper.includes('NEGATIVO')) sentiment = 'NEGATIVO';\n    else if (upper.includes('POSITIVO')) sentiment = 'POSITIVO';\n    else sentiment = 'NEUTRAL';\n    parseError = true;\n  }\n} catch (e) {\n  // Fallback por keywords si el JSON falla\n  const upper = rawContent.toUpperCase();\n  if (upper.includes('NEGATIVO')) sentiment = 'NEGATIVO';\n  else if (upper.includes('POSITIVO')) sentiment = 'POSITIVO';\n  else sentiment = 'NEUTRAL';\n  parseError = true;\n}\n\n// Recuperar datos del tweet del nodo anterior\nconst tweetText = $('📋 Preparar Datos del Tweet').item.json.tweet_text ?? '';\nconst usuario   = $('📋 Preparar Datos del Tweet').item.json.usuario ?? 'desconocido';\nconst fecha     = $('📋 Preparar Datos del Tweet').item.json.fecha ?? new Date().toISOString();\n\nreturn {\n  json: {\n    sentiment,\n    score,\n    tweet_text: tweetText,\n    usuario,\n    fecha,\n    raw_llm_response: rawContent,\n    parse_error: parseError\n  }\n};"
+      },
+      "id": "6e28d208-19cb-4b5f-bf83-9a7e24aa6256",
+      "name": "⚙️ Parsear Respuesta LLM",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -176,
+        672
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-negativo",
+              "leftValue": "={{ $json.sentiment }}",
+              "rightValue": "NEGATIVO",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a3dbcf0c-ee91-4c7f-8461-c846f983e1be",
+      "name": "🔀 IF: ¿Es NEGATIVO?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        64,
+        672
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\n\n// Gemini: content.parts[0].text\n// OpenAI: message.content\n// AI Agent: output\nlet rawContent =\n  data?.content?.parts?.[0]?.text ??\n  data?.output ??\n  data?.message?.content ??\n  data?.content ??\n  '';\n\nrawContent = String(rawContent ?? '').trim();\n\nlet summary = 'No se pudo generar el resumen.';\nlet reasons = ['No se pudieron identificar las razones.'];\nlet suggested_reply = 'Lamentamos tu experiencia. Nos comunicaremos a la brevedad.';\n\ntry {\n  const cleaned = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  summary = parsed.summary ?? summary;\n  reasons = Array.isArray(parsed.reasons) ? parsed.reasons : reasons;\n  suggested_reply = parsed.suggested_reply ?? suggested_reply;\n} catch (e) {\n  summary = rawContent.substring(0, 300);\n}\n\nconst tweetText = $('⚙️ Parsear Respuesta LLM').item.json.tweet_text ?? '';\nconst usuario   = $('⚙️ Parsear Respuesta LLM').item.json.usuario ?? 'desconocido';\nconst fecha     = $('⚙️ Parsear Respuesta LLM').item.json.fecha ?? '';\nconst score     = $('⚙️ Parsear Respuesta LLM').item.json.score ?? 0;\n\nreturn {\n  json: {\n    tweet_text: tweetText,\n    usuario,\n    fecha,\n    score,\n    summary,\n    reasons,\n    suggested_reply,\n    reasons_formatted: reasons.map((r, i) => `${i + 1}. ${r}`).join('\\n')\n  }\n};"
+      },
+      "id": "a4690741-f99f-4c94-a549-dec45893a447",
+      "name": "⚙️ Parsear Análisis LLM",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        672,
+        464
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "sendTo": "TU_EMAIL@gmail.com",
+        "subject": "=⚠️ Tweet NEGATIVO detectado — @{{ $json.usuario }} (Score: {{ ($json.score * 100).toFixed(0) }}%)",
+        "message": "=<html>\n<body style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n\n<div style=\"background: #dc3545; color: white; padding: 16px 24px; border-radius: 8px 8px 0 0;\">\n  <h2 style=\"margin:0;\">⚠️ Alerta: Tweet Negativo Detectado</h2>\n</div>\n\n<div style=\"background: #f8f9fa; padding: 24px; border: 1px solid #dee2e6;\">\n\n  <h3 style=\"color: #343a40;\">📌 Tweet Original</h3>\n  <blockquote style=\"border-left: 4px solid #dc3545; padding: 12px 16px; background: white; border-radius: 4px;\">\n    <strong>@{{ $json.usuario }}</strong> — {{ $json.fecha }}<br><br>\n    <em>\"{{ $json.tweet_text }}\"</em>\n  </blockquote>\n\n  <br>\n\n  <h3 style=\"color: #343a40;\">📝 Resumen del Problema</h3>\n  <p style=\"background: white; padding: 12px; border-radius: 4px; border: 1px solid #dee2e6;\">{{ $json.summary }}</p>\n\n  <h3 style=\"color: #343a40;\">🔍 Razones Identificadas</h3>\n  <div style=\"background: white; padding: 12px; border-radius: 4px; border: 1px solid #dee2e6;\">\n    {{ $json.reasons_formatted.replace(/\\n/g, '<br>') }}\n  </div>\n\n  <h3 style=\"color: #343a40;\">💬 Respuesta Sugerida</h3>\n  <p style=\"background: #e8f4f8; padding: 12px; border-radius: 4px; border: 1px solid #bee5eb;\">{{ $json.suggested_reply }}</p>\n\n  <br>\n  <hr style=\"border: none; border-top: 1px solid #dee2e6;\">\n  <p style=\"color: #6c757d; font-size: 12px;\">Score de negatividad: {{ ($json.score * 100).toFixed(0) }}% | Generado automáticamente por n8n Sentiment Analyzer</p>\n\n</div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "db11fa1d-a251-47c8-a18d-e7f81660d0f9",
+      "name": "📧 Gmail: Enviar Alerta Negativo",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        944,
+        464
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "WEBHOOK_ID_GENERADO_POR_N8N",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TU_CREDENCIAL_GMAIL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "reg-sentiment",
+              "name": "resultado",
+              "type": "string",
+              "value": "=Tweet procesado: {{ $json.sentiment }} (score: {{ $json.score }}) — Usuario: @{{ $json.usuario }}"
+            },
+            {
+              "id": "reg-accion",
+              "name": "accion_tomada",
+              "type": "string",
+              "value": "Registrado como positivo. Sin acción requerida."
+            },
+            {
+              "id": "reg-tweet",
+              "name": "tweet_text",
+              "type": "string",
+              "value": "={{ $json.tweet_text }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "4728fa53-f37a-4791-866f-e9df516bd62f",
+      "name": "✅ Registrar Tweet Positivo",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        368,
+        1024
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.tweet_text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "includeMergedResponse": false,
+          "systemMessage": "Sos un clasificador de sentimiento especializado en tweets de negocios. Analizá el texto y devolvé ÚNICAMENTE este JSON, sin texto adicional: {\"sentiment\": \"NEGATIVO\", \"score\": 0.92}  El campo sentiment debe ser exactamente: POSITIVO, NEGATIVO o NEUTRAL en mayúsculas. El campo score debe ser entre 0.0 y 1.0. Nada más. Solo el JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -496,
+        672
+      ],
+      "id": "2b67cc06-469c-4fd3-8427-15f80f7f6761",
+      "name": "🤖 LLM 1: Clasificar Sentimiento1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TU_CREDENCIAL_GEMINI",
+          "name": "Google Gemini(PaLM) Api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# 📊 Análisis Automático de Sentimiento de Tweets\n\n## Flujo general:\n1. **Google Sheets Trigger** → detecta fila nueva (tweet)\n2. **Preparar Datos** → normaliza campos del tweet\n3. **LLM 1: Clasificador (Gemini)** → clasifica: POSITIVO / NEGATIVO / NEUTRAL\n4. **Parsear Respuesta LLM** → extrae sentiment y score del JSON\n5. **IF: ¿Es NEGATIVO?** → bifurca el flujo\n   - **Rama NEGATIVA (true):**\n     → LLM 2: Analiza tweet → genera summary, reasons, suggested_reply\n     → Gmail: Envía alerta al equipo\n     → Sheets \"Registro\": guarda fila completa (rojo)\n   - **Rama POSITIVA/NEUTRAL (false):**\n     → Registrar Tweet Positivo\n     → Sheets \"Registro\": guarda fila básica (verde/amarillo)\n\n## ⚙️ Credenciales necesarias:\n- Google Sheets Trigger (OAuth2)\n- Google Sheets (OAuth2)\n- Google Gemini (API Key)\n- Gmail (OAuth2)\n\n## 📋 Estructura de la hoja de tweets (Hoja 1):\nColumnas: tweet_text | usuario | fecha\n\n## 📋 Estructura de la hoja Registro:\nColumnas: fecha | usuario | tweet_text | sentiment | score | summary | reasons | suggested_reply | accion\n\n## 🎨 Formato condicional en hoja Registro (columna D):\n- POSITIVO → fondo verde\n- NEUTRAL  → fondo amarillo\n- NEGATIVO → fondo rojo",
+        "height": 1008,
+        "width": 476,
+        "color": 5
+      },
+      "id": "fe598d81-00cb-4878-ae6a-d918aba1423f",
+      "name": "📘 Documentación del Flujo",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2240,
+        176
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## ⚠️ PASO 0 — CONFIGURACIÓN INICIAL\n\n**Antes de activar este workflow:**\n\n1. Configurar credencial **Google Sheets** (OAuth2)\n2. Configurar credencial **Gemini** (API Key)\n3. Configurar credencial **Gmail** (OAuth2)\n4. En el nodo Trigger → seleccionar tu hoja de cálculo\n5. En el nodo Gmail → ingresar el email destino\n\n**Estructura mínima de la hoja:**\n| tweet_text | usuario | fecha |\n|---|---|---|\n| Texto del tweet | @usuario | 2025-01-01 |",
+        "height": 320,
+        "width": 656,
+        "color": 3
+      },
+      "id": "ab20c8d6-02a6-42af-8c6a-7e5822953bec",
+      "name": "⚠️ Configuración",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1712,
+        272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "URL_DE_TU_GOOGLE_SHEET"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sentiment tweets",
+          "cachedResultUrl": ""
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        672
+      ],
+      "id": "d448d3de-d1df-44b8-90a7-ec04a992ec98",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "TU_CREDENCIAL_SHEETS_TRIGGER",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "URL_DE_TU_GOOGLE_SHEET"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1820241826,
+          "mode": "list",
+          "cachedResultName": "Registro",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $json.fecha }}",
+            "usuario": "={{ $json.usuario }}",
+            "tweet_text": "={{ $json.tweet_text }}",
+            "sentiment": "={{ $json.sentiment }}",
+            "score": "={{ $json.score }}",
+            "accion": "=registrado_positivo"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "usuario",
+              "displayName": "usuario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tweet_text",
+              "displayName": "tweet_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sentiment",
+              "displayName": "sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reasons",
+              "displayName": "reasons",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "suggested_reply",
+              "displayName": "suggested_reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        592,
+        1024
+      ],
+      "id": "faf1d1f6-09c4-4fb4-be2c-0bca9dab3825",
+      "name": "📗 Registrar en Sheets: Positivo/Neutral",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TU_CREDENCIAL_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "URL_DE_TU_GOOGLE_SHEET"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1820241826,
+          "mode": "list",
+          "cachedResultName": "Registro",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $('⚙️ Parsear Análisis LLM').item.json.fecha }}",
+            "usuario": "={{ $('⚙️ Parsear Análisis LLM').item.json.usuario }}",
+            "tweet_text": "={{ $('⚙️ Parsear Análisis LLM').item.json.tweet_text }}",
+            "score": "={{ $('⚙️ Parsear Análisis LLM').item.json.score }}",
+            "summary": "={{ $('⚙️ Parsear Análisis LLM').item.json.summary }}",
+            "reasons": "={{ $('⚙️ Parsear Análisis LLM').item.json.reasons }}",
+            "suggested_reply": "={{ $('⚙️ Parsear Análisis LLM').item.json.suggested_reply }}",
+            "accion": "alerta_enviada",
+            "sentiment": "={{ $('🔀 IF: ¿Es NEGATIVO?').item.json.sentiment }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "usuario",
+              "displayName": "usuario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tweet_text",
+              "displayName": "tweet_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment",
+              "displayName": "sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reasons",
+              "displayName": "reasons",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "suggested_reply",
+              "displayName": "suggested_reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "accion",
+              "displayName": "accion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1216,
+        464
+      ],
+      "id": "f82d554f-f484-44ea-a3c3-e19631118d58",
+      "name": "📕 Registrar en Sheets: Negativo",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TU_CREDENCIAL_SHEETS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 🟢 TRIGGER — Google Sheets\n**Evento:** Row Added (nueva fila detectada)\n**Hoja:** Sentiment tweets → Hoja 1\n**Polling:** cada 1 minuto\n\nCada vez que se agrega una fila nueva a la hoja,\neste trigger dispara el flujo automáticamente.\nLos datos que pasan al siguiente nodo:\n`tweet_text` | `usuario` | `fecha`",
+        "height": 624
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1024,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "eeef8db7-496e-451d-9e79-dc59da6953c0",
+      "name": "🟢 Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## 🔵 FLUJO PRINCIPAL\n1. **Preparar Datos** → normaliza los campos del tweet\n2. **LLM 1** → clasifica el sentimiento con Gemini\n3. **Parsear Respuesta** → extrae `sentiment` y `score` del JSON\n4. **IF Condicional** → bifurca según clasificación\n\n► `true` → rama NEGATIVA\n► `false` → rama POSITIVA / NEUTRAL",
+        "height": 624,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -768,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "4a4e2d2e-ffd8-4d16-bb0c-9a8c1003bc63",
+      "name": "🔵 Flujo Principal"
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 LLM 1 — Clasificador de Sentimiento\n**Modelo:** Gemini 2.5 Flash\n**Rol:** Clasificación estricta\n\nRecibe el texto del tweet y devuelve únicamente:\n`{\"sentiment\": \"NEGATIVO\", \"score\": 0.92}`\n\nValores posibles: POSITIVO | NEGATIVO | NEUTRAL\nEl nodo Code siguiente parsea y valida el JSON.\nSi el formato falla, hay fallback por keywords.",
+        "height": 624,
+        "width": 496,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -512,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "d04f95fe-7da5-49f6-905d-fdd5af924caf",
+      "name": "🤖 LLM 1"
+    },
+    {
+      "parameters": {
+        "content": "## 🔴 RAMA NEGATIVA\nSe activa cuando `sentiment == \"NEGATIVO\"`\n\n1. **LLM 2** → analiza el tweet en profundidad\n2. **Parsear Análisis** → extrae summary, reasons, suggested_reply\n3. **Gmail** → envía alerta HTML al equipo de community\n4. **Registro Sheets** → guarda fila completa en hoja \"Registro\"\n\nLa fila en Sheets se marca en **rojo** mediante\nformato condicional sobre la columna `sentiment`.",
+        "height": 640,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "1555e4b9-da1a-4717-bc26-d29f05552552",
+      "name": "🔴 Rama Negativa"
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 LLM 2 — Analizador de Contenido\n**Modelo:** Gemini 2.5 Flash (Message a Model)\n**Rol:** Análisis profundo para community management\n\nRecibe el tweet negativo y devuelve:\n{\n  \"summary\": \"resumen en 2 oraciones\",\n  \"reasons\": [\"razón 1\", \"razón 2\"],\n  \"suggested_reply\": \"respuesta empática\"\n}\n\nEl resultado se usa para el email de alerta\ny para el registro histórico en Sheets.\nEl nodo Code siguiente parsea y valida el JSON.\nSi el formato falla, hay fallback con texto crudo.",
+        "height": 640,
+        "width": 320,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        288,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "9d756dd0-80ca-494c-bf02-2a187e427ace",
+      "name": "🤖 LLM 2"
+    },
+    {
+      "parameters": {
+        "content": "## 🟡 RAMA NO NEGATIVA (POSITIVO / NEUTRAL)\nSe activa cuando el IF no detecta NEGATIVO.\nCubre tanto tweets POSITIVOS como NEUTRALES\nen la misma rama — no se bifurcan entre sí.\n\n1. **Registrar Tweet Positivo** → prepara los campos\n2. **Registro Sheets** → guarda fila básica en hoja \"Registro\"\n   - Sin summary, reasons ni suggested_reply\n   - accion: `registrado_positivo` o `registrado_neutral`\n\nLa fila se marca en **verde** (POSITIVO) o\n**amarillo** (NEUTRAL) por formato condicional en Sheets.",
+        "height": 336,
+        "width": 960
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -128,
+        912
+      ],
+      "typeVersion": 1,
+      "id": "7691a3ca-527a-4768-b348-8c566ad5f410",
+      "name": "🟡 Rama No Negativa"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Tweet a analizar: {{ $('⚙️ Parsear Respuesta LLM').item.json.tweet_text }}\nUsuario: {{ $('⚙️ Parsear Respuesta LLM').item.json.usuario }}\nScore de negatividad: {{ $('⚙️ Parsear Respuesta LLM').item.json.score }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "Sos un analista de contenido para community management. Dado un tweet negativo, devolvé ÚNICAMENTE este JSON: {   \"summary\": \"resumen en máximo 2 oraciones\",   \"reasons\": [\"razón 1\", \"razón 2\"],   \"suggested_reply\": \"respuesta empática en máximo 2 oraciones\" } Sin texto adicional. Solo el JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        336,
+        464
+      ],
+      "id": "15ee10f7-947b-45d1-ad63-b20386a8ab05",
+      "name": "🤖 LLM 2: Analizar Tweet Negativo",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TU_CREDENCIAL_GEMINI",
+          "name": "Google Gemini(PaLM) Api"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "📋 Preparar Datos del Tweet": {
+      "main": [
+        [
+          {
+            "node": "🤖 LLM 1: Clasificar Sentimiento1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ Parsear Respuesta LLM": {
+      "main": [
+        [
+          {
+            "node": "🔀 IF: ¿Es NEGATIVO?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 IF: ¿Es NEGATIVO?": {
+      "main": [
+        [
+          {
+            "node": "🤖 LLM 2: Analizar Tweet Negativo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "✅ Registrar Tweet Positivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ Parsear Análisis LLM": {
+      "main": [
+        [
+          {
+            "node": "📧 Gmail: Enviar Alerta Negativo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 LLM 1: Clasificar Sentimiento1": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Parsear Respuesta LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Registrar Tweet Positivo": {
+      "main": [
+        [
+          {
+            "node": "📗 Registrar en Sheets: Positivo/Neutral",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "📋 Preparar Datos del Tweet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📧 Gmail: Enviar Alerta Negativo": {
+      "main": [
+        [
+          {
+            "node": "📕 Registrar en Sheets: Negativo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 LLM 2: Analizar Tweet Negativo": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Parsear Análisis LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "9e060548-1f09-422c-9263-4fe74963da61",
+  "meta": {
+    "instanceId": "70986b4cfe8b569e880becdb9092376da15ef5a8366b1906b618df32c496a2ff"
+  },
+  "id": "0_o1gpV56Hd0U1stwXkCF",
+  "tags": []
+}

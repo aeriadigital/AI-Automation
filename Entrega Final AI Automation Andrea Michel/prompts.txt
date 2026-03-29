@@ -1,0 +1,119 @@
+================================================================
+PROMPTS UTILIZADOS — Proyecto Final n8n + LLMs
+Análisis Automático de Sentimiento de Tweets
+Coderhouse — Curso AI Automation
+================================================================
+
+----------------------------------------------------------------
+NODO: LLM 1 — Clasificar Sentimiento
+TIPO: Google Gemini → Message a Model
+MODELO: models/gemini-2.5-flash
+ROL: Clasificador estricto de sentimiento
+----------------------------------------------------------------
+
+SYSTEM MESSAGE:
+Sos un clasificador de sentimiento especializado en tweets de
+negocios. Analizá el texto y devolvé ÚNICAMENTE este JSON,
+sin texto adicional:
+{"sentiment": "NEGATIVO", "score": 0.92}
+
+El campo sentiment debe ser exactamente: POSITIVO, NEGATIVO
+o NEUTRAL en mayúsculas.
+El campo score debe ser entre 0.0 y 1.0.
+Nada más. Solo el JSON.
+
+PROMPT (USER):
+{{ $json.tweet_text }}
+
+DECISIÓN DE DISEÑO:
+Se eligió pedir JSON con dos campos (sentiment + score) para
+tener el nivel de confianza disponible en el email y en el
+registro de Sheets. El campo sentiment en MAYÚSCULAS permite
+la comparación directa en el nodo IF sin transformación.
+El nodo Code siguiente implementa fallback por keywords en
+caso de JSON malformado.
+
+LIMITACIONES Y SESGOS POTENCIALES:
+- El modelo puede tener dificultades con sarcasmo e ironía.
+- Tweets muy cortos (menos de 5 palabras) pueden clasificarse
+  incorrectamente.
+- Tweets en lunfardo o jerga regional pueden afectar
+  la precisión.
+- El score de confianza es orientativo, no estadísticamente
+  calibrado.
+- El plan gratuito de Gemini tiene límite de 20 req/min y
+  50 req/día, lo que puede interrumpir ejecuciones en pruebas
+  intensivas.
+
+
+================================================================
+
+----------------------------------------------------------------
+NODO: LLM 2 — Analizar Tweet Negativo
+TIPO: Google Gemini → Message a Model
+MODELO: models/gemini-2.5-flash
+ROL: Analizador de contenido para community management
+----------------------------------------------------------------
+
+SYSTEM MESSAGE:
+Sos un analista de contenido para community management.
+Dado un tweet negativo, devolvé ÚNICAMENTE este JSON:
+{
+  "summary": "resumen en máximo 2 oraciones",
+  "reasons": ["razón 1", "razón 2"],
+  "suggested_reply": "respuesta empática en máximo 2 oraciones"
+}
+Sin texto adicional. Solo el JSON.
+
+PROMPT (USER):
+Tweet a analizar: {{ $('Parsear Respuesta LLM').item.json.tweet_text }}
+Usuario: {{ $('Parsear Respuesta LLM').item.json.usuario }}
+Score de negatividad: {{ $('Parsear Respuesta LLM').item.json.score }}
+
+DECISIÓN DE DISEÑO:
+Se incluye el score de negatividad en el prompt para dar
+contexto al modelo sobre la severidad del tweet. Se pide
+suggested_reply como campo adicional para enriquecer la
+notificación con una respuesta lista para usar por el equipo
+de community management. El nodo Code siguiente implementa
+fallback en caso de JSON malformado: usa el texto crudo
+como summary para no perder información.
+
+LIMITACIONES Y SESGOS POTENCIALES:
+- El modelo puede proponer respuestas genéricas si el tweet
+  es muy vago o corto.
+- La identificación de razones puede no ser perfecta sin
+  contexto específico de la empresa.
+- La respuesta sugerida debe ser siempre revisada por un
+  humano antes de publicar.
+- Mismo límite de rate limit que LLM 1 al compartir la
+  misma API Key.
+
+
+================================================================
+
+TWEETS DE PRUEBA UTILIZADOS:
+================================================================
+
+Tweet 1 — NEGATIVO (esperado):
+"Pésimo servicio, llevo 3 días esperando respuesta y nadie
+contesta"
+→ Resultado obtenido: NEGATIVO, score: 0.98
+→ Email enviado: sí
+→ Registro en Sheets: fila completa con summary y reasons
+
+Tweet 2 — POSITIVO (esperado):
+"Hoy recibí mi pedido, todo en orden"
+→ Resultado obtenido: POSITIVO, score: 0.98
+→ Email enviado: no
+→ Registro en Sheets: fila básica
+
+Tweet 3 — NEUTRAL (esperado):
+"Usé el producto por primera vez hoy"
+→ Resultado obtenido: NEUTRAL, score: 0,95
+→ Email enviado: no
+→ Registro en Sheets: fila básica
+
+================================================================
+FIN DEL ARCHIVO DE PROMPTS
+================================================================
